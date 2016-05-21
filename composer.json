@@ -1,5 +1,5 @@
 {
-    "name": "herzcthu/LaravelNmap",
+    "name": "herzcthu/laravel-nmap",
     "description": "nmap wrapper for laravel 5.2",
     "require": {
 	"php": ">=5.3.0",
