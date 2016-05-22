@@ -6,29 +6,29 @@ But try to use correct combination according to nmap usage.
 
 **See below for supported arguments.**
 
-***--help ***
+***--help***
 ```php
 $help = new LaravelNmap();
 $help->NmapHelp();
 ```
 
-***-v *** (Verbose)
+***-v*** (Verbose)
 ```php
 $nmap = new LaravelNmap();
 $nmap->verbose();
 ```
 
-***-O *** (Detect OS)
+***-O*** (Detect OS)
 ```php
 $nmap->detectOS();
 ```
 
-***-sV *** (Detect Services)
+***-sV*** (Detect Services)
 ```php
 $nmap->getServices();
 ```
 
-***-sn *** (Disable port scan - same with -sP)
+***-sn*** (Disable port scan - same with -sP)
 ```php
 $nmap->disablePortScan();
 ```
@@ -46,12 +46,19 @@ $nmap->setTarget('192.168.43.0/24');
 
 ### Output
 There are 3 types of output. 
--Nmap raw output for stdout.
--SimpleXML object 
--Array
+- Nmap raw output for stdout.
+- SimpleXML object 
+- Array
 
 ```php
 $nmap->getRawOutput();
 $nmap->getXmlObject();
 $nmap->getArray();
+```
+
+### Security
+This package allow to use root permission if php user is in sudo group. Highly discourage if you don't know security risks regarding nmap.
+Below code will enable sudo permission -
+```php
+$nmap = new LaravelNmap(true);
 ```
