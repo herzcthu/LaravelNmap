@@ -6,12 +6,6 @@ use Symfony\Component\Process\ProcessBuilder;
 
 class LaravelNmap
 {
-        /*
-         * used system default nmap command.
-         * If you want to change to specific binary,
-         * you can use like '/usr/bin/nmap'
-         */
-        const CMD = 'nmap';
         private $process;
         private $arguments = [];
         private $options = [];
@@ -19,12 +13,30 @@ class LaravelNmap
         private $timeout = 300;
         public $result;
         
-        public function __construct() {
-		$this->process = new ProcessBuilder();
-                $this->process->setPrefix(self::CMD);
+        public function __construct($sudo = false) {           
+            
+            if($sudo === true) {
+                /*
+                 * Test user is in sudo group
+                 */
+                $group = new Process('groups | grep " sudo "');
+                $group->run();
+                $sudogroup = $group->getOutput();
+                if(!empty($sudogroup)) {
+                    $prefix = 'sudo';
+                    $this->arguments[] = 'nmap';
+                } else {
+                    $prefix = 'nmap';   
+                }
+            } else {
+                $prefix = 'nmap';
+            }
+            $this->process = new ProcessBuilder();
+            $this->process->setPrefix($prefix);
 	}
-
-	public function NmapHelp() {
+        
+        
+        public function NmapHelp() {
             /*
              * set argument
              */
@@ -89,7 +101,7 @@ class LaravelNmap
         /*
          * set target host or networks seperated by space
          */
-        public function target($target) {
+        public function setTarget($target) {
             $this->arguments[] = $target;
             return $this;
         }
@@ -105,7 +117,7 @@ class LaravelNmap
         /*
          * set process timeout
          */
-        public function timeout($timeout) {
+        public function setTimeout($timeout) {
             $this->timeout = $timeout;
             $this->process->setTimeout($this->timeout);
             return $this;
@@ -131,8 +143,9 @@ class LaravelNmap
             $process = $this->process->setArguments($this->arguments)->getProcess();
             
             $process->run();
-            
+            //return $process;
             $xmldata = $process->getOutput();
+            return $xmldata;
             return simplexml_load_string($xmldata);             
         }
         
@@ -145,10 +158,10 @@ class LaravelNmap
                 $array[$addr]['type'] = (string) $host->address->attributes()->addrtype;
                 $array[$addr]['state'] = (string) $host->status->attributes()->state;
                 if(isset($host->hostnames)) {
-                    $array[$addr]['hostname'] = call_user_func_array('array_merge',(array)$host->hostnames->hostname);
+                    $array[$addr]['hostname'] = isset($host->hostnames->hostname)?call_user_func_array('array_merge',(array)$host->hostnames->hostname):[];
                 }
                 if(isset($host->ports)) {
-                    $array[$addr]['ports'] = $this->getPorts($host->ports->port);
+                    $array[$addr]['ports'] = isset($host->ports->port)?$this->getPorts($host->ports->port):[];
                 }
             }
             return $array;
