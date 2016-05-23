@@ -13,7 +13,17 @@ class LaravelNmap
         private $timeout = 300;
         public $result;
         
-        public function __construct($sudo = false) {           
+        public function __construct($sudo = false) { 
+            /*
+             * Search nmap binary in system
+             */
+            $nmap = new Process('which nmap');
+            $nmap->run();
+            /*
+             * Throw an exception if nmap binary not found
+             */
+            if(empty($nmap->getOutput()))
+                throw new \ErrorException('Fatal Error: Nmap binary not found!');
             
             if($sudo === true) {
                 /*
