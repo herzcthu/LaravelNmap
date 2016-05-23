@@ -174,6 +174,7 @@ class LaravelNmap
                     switch ($type) {
                         case 'address':
                             $type = (string) $info->attributes()->addrtype;
+                            $info = (string) $info->attributes()->addr;
                             break;
                         case 'ports':
                             $info = $this->getPorts($info);
