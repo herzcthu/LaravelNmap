@@ -101,11 +101,24 @@ class LaravelNmap
             return $this;
         }
         
-        /*
-         * set target host or networks seperated by space
+        /**
+         * set target ip or network
+         * @param mixed $target (array or comma seperated string)
+         * @return \LaravelNmap\LaravelNmap
          */
         public function setTarget($target) {
-            $this->arguments[] = $target;
+            
+            if(is_array($target)) {
+                foreach ($target as $arg) {
+                    $this->arguments[] = $arg;
+                }
+            }
+            if(is_string($target)) {
+                $args = explode(',', $target);
+                foreach ($args as $arg) {
+                   $this->arguments[] = $arg; 
+                }
+            }
             return $this;
         }
         
