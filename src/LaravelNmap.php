@@ -64,7 +64,10 @@ class LaravelNmap
             return $this;
         }
         
-        public function detectOS() {
+        public function detectOS($fastscan = true) {
+            if($fastscan === true) {
+                $this->arguments[] = '-F';
+            }
             /*
              * set argument for OS detection
              */
@@ -143,26 +146,66 @@ class LaravelNmap
             $process = $this->process->setArguments($this->arguments)->getProcess();
             
             $process->run();
-            //return $process;
+            
             $xmldata = $process->getOutput();
-            return $xmldata;
-            return simplexml_load_string($xmldata);             
+            return $xmldata;             
         }
         
         public function getArray() {
-            $xml = $this->getXmlObject();
+            $xmldata = $this->getXmlObject();
+            $xml = simplexml_load_string($xmldata);
             $array = [];
             foreach($xml->host as $host) {
+                $hostaddr = (string) $host->address->attributes()->addr;
+                foreach($host->children() as $type => $info) {
+                    switch ($type) {
+                        case 'address':
+                            $type = (string) $info->attributes()->addrtype;
+                            break;
+                        case 'ports':
+                            $info = $this->getPorts($info);
+                            break;
+                        case 'os':
+                            $os['name'] = isset($info->osmatch[0])?(string) $info->osmatch[0]->attributes()->name:'';
+                            $os['vendor'] = isset($info->osmatch[0]->osclass)?(string) $info->osmatch[0]->osclass->attributes()->vendor:'';
+                            $os['osfamily'] = isset($info->osmatch[0]->osclass)?(string) $info->osmatch[0]->osclass->attributes()->osfamily:'';
+                            $os['osgen'] = isset($info->osmatch[0]->osclass)?(string) $info->osmatch[0]->osclass->attributes()->osgen:'';
+                            $info = $os;
+                            break;
+                        case 'status';
+                            $info = (string) $info->attributes()->state;
+                            break;
+                        case 'uptime';
+                            $uptime['seconds'] = (string) $info->attributes()->seconds;
+                            $uptime['lastboot'] = (string) $info->attributes()->lastboot;
+                            $info = $uptime;
+                            break;
+                        default:
+                            $info = array_values((array) $info);
+                            break;
+                    }
+                        $array[$hostaddr][$type] = $info;                    
+                }
+                /*
                 $addr = (string) $host->address->attributes()->addr;
-                $array[$addr]['addr'] = $addr;
-                $array[$addr]['type'] = (string) $host->address->attributes()->addrtype;
-                $array[$addr]['state'] = (string) $host->status->attributes()->state;
+                $addrtype = (string) $host->address->attributes()->addrtype;
+                $array[$addr][$addrtype]['addr'] = $addr;
+                $array[$addr][$addrtype]['type'] = $addrtype;
+                if(isset($host->status)) {
+                    $array[$addr]['state'] = (string) $host->status->attributes()->state;
+                }
+                if(isset($host->uptime)) {
+                    $array[$addr]['uptime'] = (string) $host->uptime->attributes()->seconds;
+                    $array[$addr]['lastboot'] = (string) $host->uptime->attributes()->lastboot;
+                }
                 if(isset($host->hostnames)) {
                     $array[$addr]['hostname'] = isset($host->hostnames->hostname)?call_user_func_array('array_merge',(array)$host->hostnames->hostname):[];
                 }
                 if(isset($host->ports)) {
                     $array[$addr]['ports'] = isset($host->ports->port)?$this->getPorts($host->ports->port):[];
                 }
+                 * 
+                 */
             }
             return $array;
         }
@@ -177,11 +220,14 @@ class LaravelNmap
         
         private function getPorts(\SimpleXMLElement $xmlPorts) {
             $ports = [];
-            foreach($xmlPorts as $port) {
+            //return $xmlPorts;
+            foreach($xmlPorts as $type => $port) {
                 $portid = (string) $port->attributes()->portid;
+                if(!empty($portid)) {
                 $ports[$portid]['protocol'] = (string) $port->attributes()->protocol;
                 $ports[$portid]['state'] = (string) $port->state->attributes()->state;
                 $ports[$portid]['service'] = (string) $port->service->attributes()->name;
+                }
             }
             return $ports;
         }

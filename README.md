@@ -29,6 +29,7 @@ $nmap->getServices();
 ```
 
 ***-sn*** (Disable port scan - same with -sP)
+This method cannot be use with other scan type. See nmap help for more information.
 ```php
 $nmap->disablePortScan();
 ```
@@ -58,7 +59,21 @@ $nmap->getArray();
 
 ### Security
 This package allow to use root permission if php user is in sudo group. Highly discourage if you don't know security risks regarding nmap.
+
 Below code will enable sudo permission -
 ```php
 $nmap = new LaravelNmap(true);
 ```
+
+### Other options
+Other options supported are setTimeout($seconds) and setEnv($name, $value).
+
+If you want to increase default process timeout, use setTimeout(). 
+
+Example:
+```php
+$nmap->setTimeout('300');
+```
+
+If you want to set environment variable when running process, use setEnv($name, $value);
+
