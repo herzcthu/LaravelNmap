@@ -169,14 +169,15 @@ class LaravelNmap
             $process = $this->process->setArguments($this->arguments)->getProcess();
             
             $process->run();
-            
             $xmldata = $process->getOutput();
             return $xmldata;             
         }
         
         public function getArray() {
             $xmldata = $this->getXmlObject();
+            if(empty($xmldata)) return;
             $xml = simplexml_load_string($xmldata);
+            if(!$xml instanceof \SimpleXMLElement) return;
             $array = [];
             foreach($xml->host as $host) {
                 $hostaddr = (string) $host->address->attributes()->addr;
